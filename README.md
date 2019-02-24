@@ -14,9 +14,9 @@ This repository provides a code to reflect your Trello condition (How many tasks
 
 ```
 $ git clone https://github.com/shinobe179/sync-trello-slack-status.git
-$ cd sync-trello-slack-status
+$ cd sync-trello-slack-status/src
 $ pip install -r requirements.txt -t ./
-$ zip -r stss.zip .
+$ zip -r stss.zip . -x requirements.txt
 ```
 
 ### 2) Upload the zip archive to AWS Lambda
