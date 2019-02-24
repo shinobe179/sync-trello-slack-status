@@ -40,17 +40,17 @@ def change_slack_status(task_count, token, status_expiration=0):
     status_text = 'tasks:' + str(task_count)
 
     if 0 <= task_count < 10:
-        status_emoji = ':pawapro-5:'
+        status_emoji = 'laghing'
     elif 10 <= task_count < 20:
-        status_emoji = ':pawapro-4:'
+        status_emoji = ':smiley:'
     elif 20 <= task_count < 30:
-        status_emoji = ':pawapro-3:'
+        status_emoji = ':neutral_face:'
     elif 30 <= task_count < 40:
-        status_emoji = ':pawapro-2:'
+        status_emoji = ':fearful:'
     elif 40 <= task_count:
-        status_emoji = ':pawapro-1:'
+        status_emoji = ':exploding_head:'
     else:
-        status_emoji = ':pawapro-0:'
+        status_emoji = ':drooling_face:'
 
     headers_dict = {'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
