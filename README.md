@@ -8,6 +8,7 @@ This repository provides a code to reflect your Trello condition (How many tasks
 
 ### Prerequires
 
+- Enable to use Trello API.
 - Enable to use Slack `users.profile.set` API.
 
 ### 1) Create a zip archive
