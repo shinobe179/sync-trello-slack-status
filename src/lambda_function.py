@@ -17,23 +17,26 @@ def lambda_handler(*args):
 def get_trello_task_count(username, key, token, ignore_list_name=None):
     api_header = 'https://trello.com/1/'
     task_number = 0
+
+    member_resp = requests.get(api_header + 'member/' + username + '/?key=' + key + '&token=' + token + '&fields=id')
+    userid = member_resp.json()['id']
     
     # ボードID一覧の取得
-    r = requests.get(api_header + 'members/' + username + '/boards?key=' + key + '&token=' + token + '&fields=id')
-    board_id_list = [i['id'] for i in r.json()]
+    board_resp = requests.get(api_header + 'members/' + username + '/boards?key=' + key + '&token=' + token + '&fields=id')
+    board_id_list = [i['id'] for i in board_resp.json()]
     
     # リストID、カードID一覧の取得
     for bid in board_id_list:
-        lr = requests.get(api_header + 'boards/' + bid + '/lists?key=' + key + '&token=' + token + '&fields=id,name')
-        list_list = lr.json()
+        list_resp = requests.get(api_header + 'boards/' + bid + '/lists?key=' + key + '&token=' + token + '&fields=id,name')
+        list_list = list_resp.json()
         ignore_list_id = ''
         for i in list_list:
             if 'Done' in i['name']:
                 ignore_list_id =  i['id']
                 break
-        cr = requests.get(api_header + 'boards/' + bid + '/cards?key=' + key + '&token=' + token + '&fields=idList')
-        card_list = cr.json()
-        task_number += (len(cr.json()) - len([i for i in card_list if i['idList'] == ignore_list_id]))
+        card_resp = requests.get(api_header + 'boards/' + bid + '/cards?key=' + key + '&token=' + token + '&fields=idList,idMembers')
+        card_list = [i for i in card_resp.json() if userid in i['idMembers']]
+        task_number += (len(card_list) - len([i for i in card_list if i['idList'] == ignore_list_id]))
     return task_number
 
 def change_slack_status(task_count, token, status_expiration=0):
