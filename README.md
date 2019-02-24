@@ -2,9 +2,13 @@
 
 ## Overview
 
-This repository provides a code to reflect your Trello condition (How you are busy) to Slack status using AWS Lambda.
+This repository provides a code to reflect your Trello condition (How many tasks you have) to Slack status using AWS Lambda.
 
 ## How to deploy
+
+### Prerequires
+
+- Enable to use Slack `users.profile.set` API.
 
 ### 1) Create a zip archive
 
@@ -19,4 +23,21 @@ $ zip -r stss.zip .
 
 ### 3) Set environment variables
 
-### 4) Create an event rule on AWS Cloudwatch as you like
+- `TRELLO_USERNAME`
+    -  username for Trello
+- `TRELLO_KEY`
+    - API key for Trello
+- `TRELLO_TOKEN`
+    - API token for Trello
+- `IGNORE_LIST_NAME`
+    - If there are lists shouldn't be counted(ex. list for done tasks), please registor its name.
+- `SLACK_TOKEN`
+    - API token for Slack
+
+### 4) Tune timeout value
+
+Default settings is not enough to work correctly. You need to tune(increase) it in most cases.
+
+### 5) Create an event rule on AWS Cloudwatch as you like
+
+To work it automatically. Its interval is as you like.
