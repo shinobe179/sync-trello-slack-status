@@ -1,5 +1,9 @@
 # Sync Trello Slack Status
 
+![screenshot from 2019-02-24 23-13-53](https://user-images.githubusercontent.com/37702148/53300770-aff39b00-388e-11e9-839c-8ef2e3dd55be.png)
+![screenshot from 2019-02-24 23-13-24](https://user-images.githubusercontent.com/37702148/53300773-b2ee8b80-388e-11e9-811b-920aa5b9bb33.png)
+![screenshot from 2019-02-24 23-14-33](https://user-images.githubusercontent.com/37702148/53300774-255f6b80-388f-11e9-86a9-6ce602f27128.png)
+
 ## Overview
 
 This repository provides a code to reflect your Trello condition (How many tasks you have) to Slack status using AWS Lambda.
