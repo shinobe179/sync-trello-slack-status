@@ -3,15 +3,15 @@ import os
 
 import requests
 
-torello_username = os.environ['TRELLO_USERNAME']
-torello_key = os.environ['TRELLO_KEY']
-torello_token = os.environ['TRELLO_TOKEN']
+trello_username = os.environ['TRELLO_USERNAME']
+trello_key = os.environ['TRELLO_KEY']
+trello_token = os.environ['TRELLO_TOKEN']
 ignore_list_name = os.environ['IGNORE_LIST_NAME']
 slack_token = os.environ['SLACK_TOKEN']
 
 
 def lambda_handler(*args):
-    trello_task_count = get_trello_task_count(torello_username, torello_key, torello_token, ignore_list_name)
+    trello_task_count = get_trello_task_count(trello_username, trello_key, trello_token, ignore_list_name)
     change_slack_status(trello_task_count, slack_token)
 
 def get_trello_task_count(username, key, token, ignore_list_name=None):
