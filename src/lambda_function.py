@@ -4,12 +4,13 @@ import os
 import requests
 
 trello_username = os.environ['TRELLO_USERNAME']
-ignore_list_name = os.environ['IGNORE_LIST_NAME']
+list_name = os.environ['LIST_NAME']
+ignore_flag = os.environ['IGNORE_FLAG']
 slack_token = os.environ['SLACK_TOKEN']
 
 
 def lambda_handler(*args):
-    trello_task_count = get_trello_task_count(trello_username, ignore_list_name)
+    trello_task_count = get_trello_task_count(trello_username, list_name, ignore_mode=ignore_flag)
     change_slack_status(trello_task_count, slack_token)
 
 
@@ -22,26 +23,33 @@ def get_request_to_trello(path, fields=None):
     return r
 
 
-def get_trello_task_count(username, ignore_list_name=None):
-    task_count = 0
+def search_list_id(list_name, trello_lists):
+    list_id = ''
+    for tl in trello_lists:
+        if list_name in tl['name']:
+            list_id = tl['id']
+            break
+    return list_id
 
-    # ボードID一覧の取得
+
+def get_trello_task_count(username, list_name, ignore_mode='disable'):
+    card_count = 0
+
     board_resp = get_request_to_trello('members/username/boards', fields='id')
     board_ids = [i['id'] for i in board_resp.json()]
 
-    # リストID、カードID一覧の取得
     for bid in board_ids:
         list_resp = get_request_to_trello('boards/{}/lists'.format(bid), fields='id,name')
-        lists = list_resp.json()
-        ignore_list_id = ''
-        for i in lists:
-            if 'Done' in i['name']:
-                ignore_list_id = i['id']
-                break
+        trello_lists = list_resp.json()
+        list_id = search_list_id(list_name, trello_lists)
         card_resp = get_request_to_trello('boards/{}/cards'.format(bid), fields='idList')
         cards = card_resp.json()
-        task_count += (len(cards) - len([i for i in cards if i['idList'] == ignore_list_id]))
-    return task_count
+        if ignore_mode == "enable":
+            card_count += (len(cards) - len([card for card in cards if card['idList'] == list_id]))
+        elif ignore_mode == "disable":
+            card_count += (len([card for card in cards if card['idList'] == list_id]))
+
+    return card_count
 
 
 def return_emoji(task_count):
@@ -76,4 +84,5 @@ def change_slack_status(task_count, token, status_expiration=0):
             }
     }
     r = requests.post('https://slack.com/api/users.profile.set', headers=headers_dict, data=json.dumps(data_dict))
+
     return r.json()
