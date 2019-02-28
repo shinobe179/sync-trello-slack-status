@@ -4,41 +4,47 @@ import os
 import requests
 
 trello_username = os.environ['TRELLO_USERNAME']
-trello_key = os.environ['TRELLO_KEY']
-trello_token = os.environ['TRELLO_TOKEN']
 ignore_list_name = os.environ['IGNORE_LIST_NAME']
 slack_token = os.environ['SLACK_TOKEN']
 
 
 def lambda_handler(*args):
-    trello_task_count = get_trello_task_count(trello_username, trello_key, trello_token, ignore_list_name)
+    trello_task_count = get_trello_task_count(trello_username, ignore_list_name)
     change_slack_status(trello_task_count, slack_token)
 
-def get_trello_task_count(username, key, token, ignore_list_name=None):
+
+def get_request_to_trello(path, fields=None):
     api_header = 'https://trello.com/1/'
-    task_number = 0
-    
+    key = os.environ['TRELLO_KEY']
+    token = os.environ['TRELLO_TOKEN']
+
+    r = requests.get('{}{}?key={}&token={}&fields={}'.format(api_header, path, key, token, fields))
+    return r
+
+
+def get_trello_task_count(username, ignore_list_name=None):
+    task_count = 0
+
     # ボードID一覧の取得
-    r = requests.get(api_header + 'members/' + username + '/boards?key=' + key + '&token=' + token + '&fields=id')
-    board_id_list = [i['id'] for i in r.json()]
-    
+    board_resp = get_request_to_trello('members/username/boards', fields='id')
+    board_ids = [i['id'] for i in board_resp.json()]
+
     # リストID、カードID一覧の取得
-    for bid in board_id_list:
-        lr = requests.get(api_header + 'boards/' + bid + '/lists?key=' + key + '&token=' + token + '&fields=id,name')
-        list_list = lr.json()
+    for bid in board_ids:
+        list_resp = get_request_to_trello('boards/{}/lists'.format(bid), fields='id,name')
+        lists = list_resp.json()
         ignore_list_id = ''
-        for i in list_list:
+        for i in lists:
             if 'Done' in i['name']:
-                ignore_list_id =  i['id']
+                ignore_list_id = i['id']
                 break
-        cr = requests.get(api_header + 'boards/' + bid + '/cards?key=' + key + '&token=' + token + '&fields=idList')
-        card_list = cr.json()
-        task_number += (len(cr.json()) - len([i for i in card_list if i['idList'] == ignore_list_id]))
-    return task_number
+        card_resp = get_request_to_trello('boards/{}/cards'.format(bid), fields='idList')
+        cards = card_resp.json()
+        task_count += (len(cards) - len([i for i in cards if i['idList'] == ignore_list_id]))
+    return task_count
 
-def change_slack_status(task_count, token, status_expiration=0):
-    status_text = 'tasks:' + str(task_count)
 
+def return_emoji(task_count):
     if 0 <= task_count < 10:
         status_emoji = ':laughing:'
     elif 10 <= task_count < 20:
@@ -51,15 +57,23 @@ def change_slack_status(task_count, token, status_expiration=0):
         status_emoji = ':exploding_head:'
     else:
         status_emoji = ':drooling_face:'
+    return status_emoji
 
-    headers_dict = {'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                   }
-    data_dict = {'profile': 
-                    {'status_text': status_text,
-                     'status_emoji': status_emoji,
-                     'status_expiration': status_expiration
-                    }
-                }
+
+def change_slack_status(task_count, token, status_expiration=0):
+    status_text = 'tasks:' + str(task_count)
+    status_emoji = return_emoji(task_count)
+
+    headers_dict = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    }
+    data_dict = {
+        'profile': {
+            'status_text': status_text,
+            'status_emoji': status_emoji,
+            'status_expiration': status_expiration
+            }
+    }
     r = requests.post('https://slack.com/api/users.profile.set', headers=headers_dict, data=json.dumps(data_dict))
     return r.json()
