@@ -84,5 +84,5 @@ def change_slack_status(task_count, token, status_expiration=0):
             }
     }
     r = requests.post('https://slack.com/api/users.profile.set', headers=headers_dict, data=json.dumps(data_dict))
-    return r.json()
 
+    return r.json()
