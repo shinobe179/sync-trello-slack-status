@@ -1,41 +1,49 @@
 import json
+import logging
 import os
+import sys
 
 import requests
 
-trello_username = os.environ['TRELLO_USERNAME']
-list_name = os.environ['LIST_NAME']
-ignore_flag = os.environ['IGNORE_FLAG']
-slack_token = os.environ['SLACK_TOKEN']
-
 
 def lambda_handler(*args):
+    trello_username = os.environ['TRELLO_USERNAME']
+    list_name = os.environ['LIST_NAME']
+    ignore_flag = os.environ['IGNORE_FLAG']
+    slack_token = os.environ['SLACK_TOKEN']
+
     trello_task_count = get_trello_task_count(trello_username, list_name, ignore_mode=ignore_flag)
     change_slack_status(trello_task_count, slack_token)
 
 
-def get_request_to_trello(path, fields=None):
+def get_request_to_trello(path, fields='id'):
     api_header = 'https://trello.com/1/'
     key = os.environ['TRELLO_KEY']
     token = os.environ['TRELLO_TOKEN']
 
     r = requests.get('{}{}?key={}&token={}&fields={}'.format(api_header, path, key, token, fields))
+
+    if r.status_code != 200:
+        logging.info("% Request error occured. Code: " + r.status_code)
+        sys.exit(1)
+
     return r
 
 
 def search_list_id(list_name, trello_lists):
     list_id = ''
+
     for tl in trello_lists:
         if list_name in tl['name']:
             list_id = tl['id']
             break
+
     return list_id
 
 
 def get_trello_task_count(username, list_name, ignore_mode='disable'):
     card_count = 0
-
-    board_resp = get_request_to_trello('members/username/boards', fields='id')
+    board_resp = get_request_to_trello('members/username/boards')
     board_ids = [i['id'] for i in board_resp.json()]
 
     for bid in board_ids:
@@ -65,12 +73,13 @@ def return_emoji(task_count):
         status_emoji = ':exploding_head:'
     else:
         status_emoji = ':drooling_face:'
+
     return status_emoji
 
 
 def change_slack_status(task_count, token, status_expiration=0):
-    status_text = 'tasks:' + str(task_count)
     status_emoji = return_emoji(task_count)
+    status_text = 'tasks:' + str(task_count)
 
     headers_dict = {
         'Content-Type': 'application/json',
