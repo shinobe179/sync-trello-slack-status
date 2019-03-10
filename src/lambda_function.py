@@ -17,11 +17,11 @@ def lambda_handler(*args):
 
 
 def get_request_to_trello(path, fields='id'):
-    api_header = 'https://trello.com/1/'
+    api_url_header = 'https://trello.com/1/'
     key = os.environ['TRELLO_KEY']
     token = os.environ['TRELLO_TOKEN']
 
-    r = requests.get('{}{}?key={}&token={}&fields={}'.format(api_header, path, key, token, fields))
+    r = requests.get('{}{}?key={}&token={}&fields={}'.format(api_url_header, path, key, token, fields))
 
     if r.status_code != 200:
         logging.info("% Request error occured. Code: " + r.status_code)
@@ -61,6 +61,11 @@ def get_trello_task_count(username, list_name, ignore_mode='disable'):
 
 
 def return_emoji(task_count):
+    
+    if type(task_count) != int:
+        status_emoji = ':drooling_face:'
+        return status_emoji
+
     if 0 <= task_count < 10:
         status_emoji = ':laughing:'
     elif 10 <= task_count < 20:
@@ -71,13 +76,12 @@ def return_emoji(task_count):
         status_emoji = ':fearful:'
     elif 40 <= task_count:
         status_emoji = ':exploding_head:'
-    else:
-        status_emoji = ':drooling_face:'
-
+    
     return status_emoji
 
 
 def change_slack_status(task_count, token, status_expiration=0):
+    api_url = 'https://slack.com/api/users.profile.set'
     status_emoji = return_emoji(task_count)
     status_text = 'tasks:' + str(task_count)
 
@@ -92,6 +96,6 @@ def change_slack_status(task_count, token, status_expiration=0):
             'status_expiration': status_expiration
             }
     }
-    r = requests.post('https://slack.com/api/users.profile.set', headers=headers_dict, data=json.dumps(data_dict))
+    r = requests.post(api_url, headers=headers_dict, data=json.dumps(data_dict))
 
     return r.json()
