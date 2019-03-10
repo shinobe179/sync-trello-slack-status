@@ -12,7 +12,7 @@ class TestClient(unittest.TestCase):
     def test_search_list_id(self):
         self.test_trello_lists = [{'name': 'ToDo', 'id': '001'}, {'name': 'Doing', 'id': '002'}, {'name': 'Done', 'id': '003'}]
 
-        self.assertEqual(lf.search_list_id('ToDo', self.test_trello_lists), '001')
+        self.assertEqual(self.lf.search_list_id('ToDo', self.test_trello_lists), '001')
 
     def test_get_trello_task_count(self):
         pass
@@ -22,7 +22,7 @@ class TestClient(unittest.TestCase):
         self.test_ans_list = [':laughing:', ':smiley:', ':neutral_face:', ':fearful:', ':exploding_head:', ':exploding_head:', ':drooling_face:']
 
         for i in range(len(self.test_arg_list)):
-            self.assertEqual(lf.return_emoji(self.test_arg_list[i]), self.test_ans_list[i])
+            self.assertEqual(self.lf.return_emoji(self.test_arg_list[i]), self.test_ans_list[i])
 
     def test_change_slack_status(self):
         pass
